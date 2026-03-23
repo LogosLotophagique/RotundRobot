@@ -6,47 +6,75 @@ import time
 GPIO.setmode(GPIO.BCM)
 
 # Choisir les GPIO pour les signaux
-SERVO_PIN1 = 5
-SERVO_PIN2 = 6
-SERVO_PIN3 = 13
-GPIO.setup(SERVO_PIN1, GPIO.OUT)
-GPIO.setup(SERVO_PIN2, GPIO.OUT)
-GPIO.setup(SERVO_PIN3, GPIO.OUT)
+SERVO_PINC = 5 # coude
+SERVO_PINT = 6 # torse
+SERVO_PINB = 13 # bras
+THRESHOLD_TURN = 25
+
+GPIO.setup(SERVO_PINC, GPIO.OUT)
+GPIO.setup(SERVO_PINT, GPIO.OUT)
+GPIO.setup(SERVO_PINB, GPIO.OUT)
 
 # Création des PWM à 50 Hz (standard servo)
-pwm1 = GPIO.PWM(SERVO_PIN1, 50)
-pwm1.start(0)
-pwm2 = GPIO.PWM(SERVO_PIN2, 50)
-pwm2.start(0)
-pwm3 = GPIO.PWM(SERVO_PIN3, 50)
-pwm3.start(0)
+pwmC = GPIO.PWM(SERVO_PINC, 50)
+pwmC.start(0)
+pwmT = GPIO.PWM(SERVO_PINT, 50)
+pwmT.start(0)
+pwmB = GPIO.PWM(SERVO_PINB, 50)
+pwmB.start(0)
 
-def set_angle(angle, pwm):
-    # Conversion angle → DutyCycle
-    duty = 2 + (angle / 18)  # approx pour SG90 (0°=2%, 90°=7%, 180°=12%)
-    pwm.ChangeDutyCycle(duty)
-    time.sleep(0.7)  # temps pour que le servo bouge
-    pwm.ChangeDutyCycle(0)  # éviter vibrations
+def set_angle(*args: list):
+    """
+    args: lists of [angle, pwm]
+    """
+    for arg in args:
+        angle, pwm = arg
+        print(angle, pwm)
+        # Conversion angle → DutyCycle
+        duty = 2 + (angle / 18)  # approx pour SG90 (0°=2%, 90°=7%, 180°=12%)
+        pwm.ChangeDutyCycle(duty)
+        time.sleep(0.01)
+    time.sleep(0.7)  # temps pour que le(s) servo(s) bouge(nt)
+    for arg in args:
+        angle, pwm = arg
+        pwm.ChangeDutyCycle(0)  # éviter vibrations
 
-try:
-    while True:
-        set_angle(60, pwm1)
-        set_angle(30, pwm2)
-        set_angle(90, pwm3)
-        time.sleep(0.1) # 100ms juste pour dire qu'on ne recommence pas tout de suite
-        set_angle(90, pwm1)
-        set_angle(60, pwm2)
-        set_angle(110, pwm3)
-        time.sleep(0.1)
-        set_angle(150, pwm1)
-        set_angle(120, pwm2)
-        set_angle(130, pwm3)
-        time.sleep(0.1)
+def idle():
+    set_angle([0, pwmC])
+    set_angle([90, pwmT])
+    set_angle([0, pwmB])
 
-except KeyboardInterrupt:
-    pass
+def left():
+    set_angle([180-THRESHOLD_TURN, pwmT])
+    time.sleep(0.1) # 100ms juste pour dire qu'on ne recommence pas tout de suite
 
-pwm1.stop()
-pwm2.stop()
-pwm3.stop()
-GPIO.cleanup() # Défaire le setup des GPIO
+def right():
+    set_angle([0+THRESHOLD_TURN, pwmT])
+    time.sleep(0.1)
+
+def take(up_angle:int=0):
+    set_angle([180-up_angle, pwmB], [85+up_angle//45, pwmC])
+    time.sleep(0.1)
+    set_angle([0, pwmB])
+    time.sleep(0.1)
+
+def main():
+    try:
+        while True:
+            idle()
+            time.sleep(2) 
+            take()
+            #left()
+            take(90)
+            #right()
+            take(135)
+    except KeyboardInterrupt:
+        pass
+
+    pwmC.stop()
+    pwmT.stop()
+    pwmB.stop()
+    GPIO.cleanup() # Défaire le setup des GPIO
+
+if __name__ == "__main__":
+    main()
