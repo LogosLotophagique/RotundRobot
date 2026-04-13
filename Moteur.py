@@ -85,8 +85,7 @@ def main():
         stop() # empêcher le robot d'avancer à l'infini
         GPIO.cleanup()
         raise e
+    GPIO.cleanup() # Défaire le setup des GPIO
 
 if __name__ == "__main__":
     main()
-
-GPIO.cleanup() # Défaire le setup des GPIO

@@ -64,10 +64,10 @@ def main():
             idle()
             time.sleep(2) 
             take()
-            #left()
-            take(90)
-            #right()
-            take(135)
+            left()
+            take()
+            right()
+            take()
     except KeyboardInterrupt:
         pass
 
