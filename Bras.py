@@ -33,11 +33,11 @@ def set_angle(*args: list):
         print(*arg)
         if len(arg) == 4:
             angle_target, angle_init, steps, pwm = arg
-            for i in range(angle_init, angle_target, (angle_target-angle_init)/steps):
+            for i in range(int(angle_init), int(angle_target), (angle_target-angle_init)//steps):
                 # Conversion angle → DutyCycle
                 duty = 2 + (i / 18)  # approx pour SG90 (0°=2%, 90°=7%, 180°=12%)
                 pwm.ChangeDutyCycle(duty)
-                time.sleep(0.01)
+                time.sleep(0.05)
         else: 
             angle_target, pwm = arg
         duty = 2 + (angle_target / 18)  # approx pour SG90 (0°=2%, 90°=7%, 180°=12%)
@@ -62,10 +62,10 @@ def right():
     time.sleep(0.1)
 
 def take(up_angle:int=0, release=False):
-    set_angle([180-up_angle, 0, 10, pwmB], [85+up_angle//45, 0, 10, pwmC])
+    set_angle([180-up_angle, 0, 20, pwmB], [85+up_angle//45, 0, 20, pwmC])
     GPIO.output(MAGNET_PIN, GPIO.LOW if release else GPIO.HIGH) # aimant ON/OFF
     time.sleep(0.1)
-    set_angle([0, 180-up_angle, 10, pwmB])
+    set_angle([0, 180-up_angle, 30, pwmB])
     time.sleep(0.1)
 
 def main():
@@ -81,6 +81,11 @@ def main():
     except KeyboardInterrupt:
         pass
 
+    # éviter vibrations
+    pwmC.ChangeDutyCycle(0)  
+    pwmT.ChangeDutyCycle(0)
+    pwmB.ChangeDutyCycle(0)
+    time.sleep(0.01)
     pwmC.stop()
     pwmT.stop()
     pwmB.stop()
